@@ -404,6 +404,7 @@ async function saveSession() {
 
   const btn = $('#save-session');
   btn.disabled = true; btn.classList.add('busy');
+  btn.querySelector('span').textContent = 'Saving…';
   try {
     const result = await send({ action: 'logSession', day, week, date, entries: entries.map((e) => ({ ...e, sets: e.sets.map((x) => x ?? '') })) });
     store.del(draftKey(day));
@@ -420,6 +421,7 @@ async function saveSession() {
   } catch (err) {
     toast(`Not saved: ${err.message}`, 'bad');
     btn.disabled = false; btn.classList.remove('busy');
+    btn.querySelector('span').textContent = 'Save workout';
   }
 }
 
@@ -727,6 +729,8 @@ document.addEventListener('change', (e) => {
 });
 
 document.addEventListener('submit', async (e) => {
+  // The confirm dialog's <form method="dialog"> must submit normally so it closes.
+  if (e.target.id !== 'settings-form' && e.target.id !== 'bw-form') return;
   e.preventDefault();
   const form = Object.fromEntries(new FormData(e.target));
   if (e.target.id === 'settings-form') {
