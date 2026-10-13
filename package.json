@@ -1,0 +1,11 @@
+{
+  "name": "strengthtraining",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Gym workout tracker backed by a Google Sheet",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "start": "python3 -m http.server 8080 --directory docs"
+  }
+}
