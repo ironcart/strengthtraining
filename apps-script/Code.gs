@@ -1,3 +1,4 @@
+/** @OnlyCurrentDoc */
 /**
  * Workout Tracker API - a tiny JSON API over the "Workout Tracker" sheet.
  *
