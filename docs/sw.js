@@ -1,5 +1,5 @@
 // Offline shell: cache the app files, always go to the network for sheet data.
-const CACHE = 'liftlog-v1';
+const CACHE = 'liftlog-v2';
 const SHELL = ['./', 'index.html', 'styles.css', 'js/app.js', 'js/core.js', 'js/charts.js', 'js/demo-data.js', 'manifest.webmanifest', 'icon.svg'];
 
 self.addEventListener('install', (e) => {
