@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Gym workout tracker backed by a Google Sheet",
+  "description": "Gym workout and habit trackers backed by Google Sheets",
   "scripts": {
     "test": "node --test test/*.test.js",
     "start": "python3 -m http.server 8080 --directory docs"

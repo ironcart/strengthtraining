@@ -1,5 +1,5 @@
 // Offline shell: cache the app files, always go to the network for sheet data.
-const CACHE = 'liftlog-v2';
+const CACHE = 'liftlog-v3';
 const SHELL = ['./', 'index.html', 'styles.css', 'js/app.js', 'js/core.js', 'js/charts.js', 'js/demo-data.js', 'manifest.webmanifest', 'icon.svg'];
 
 self.addEventListener('install', (e) => {
@@ -7,7 +7,8 @@ self.addEventListener('install', (e) => {
 });
 
 self.addEventListener('activate', (e) => {
-  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
+  // Only clean up our own caches: Habit Log (docs/habits) shares this origin.
+  e.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((k) => k.startsWith('liftlog-') && k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
 });
 
 self.addEventListener('fetch', (e) => {

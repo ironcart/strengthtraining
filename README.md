@@ -80,10 +80,40 @@ Anything you save in demo mode stays on that phone only.
 **Note:** the formulas on the sheet's own `Progress` tab only look at `Log` rows 2–193 (the 8 pre-made weeks).
 The app's charts read every row, but if you log past week 8, extend those ranges in the sheet too.
 
+## Habit Log — daily habit tracker
+
+A second app in this repo, at `https://<your-user>.github.io/strengthtraining/habits/`, for the
+**Habit Tracker** Google Sheet (`Habits`, `Log` and `Progress` tabs). It starts with the first habit, *No soda*.
+
+**What it does**
+
+- **One big button.** Tap **I did it** and today is logged (it turns green, with a small vibration).
+  Tap it again to undo, or use **Undo** on the message at the bottom.
+- **Forgot a day?** Tap that day in the week strip above the button, then tap the button. Older days can be
+  picked from the calendar. Days since your start date that you didn't log are outlined in amber, with
+  one-tap **+ day** buttons for the last week. Future days can't be logged.
+- **Money saved.** The big number is *days completed since the start date × saved per day*, the same
+  calculation as the sheet. Tap **Edit** to change the daily amount (e.g. `8` for $8) or the start date;
+  both are written back to the yellow cells on the `Habits` tab. It also shows what that comes to per week,
+  month and year.
+- **Streaks.** Current and best streak, success rate and last logged day, matching the sheet's formulas.
+  The current streak stays alive until you miss a whole day.
+- Works offline: taps are kept on the phone and synced in order when you're back online.
+- Add more habits as new rows on the `Habits` tab and a switcher appears at the top.
+
+**Setup.** It's the same as Lift Log, but done in the **Habit Tracker** spreadsheet using
+[`apps-script/Habits.gs`](apps-script/Habits.gs):
+Extensions → Apps Script → paste `Habits.gs` → run **`setupToken`** → **Deploy → New deployment → Web app**
+(Execute as *Me*, access *Anyone*) → paste the URL and token into Habit Log's **Settings** (⚙). Then add it to
+your home screen as its own app. Until it's connected it runs in demo mode on a snapshot of your sheet.
+
+The app only writes the input columns: `Log` A–C (one row per habit per day, never duplicated; undo deletes
+the row) and `Habits` B–C. The formula columns are never touched.
+
 ## Development
 
 ```bash
-npm test     # unit tests for the progression logic (Node 18+)
+npm test     # unit tests for the progression and habit logic (Node 18+)
 npm start    # serve docs/ on http://localhost:8080
 ```
 
