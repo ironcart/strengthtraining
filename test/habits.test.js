@@ -6,7 +6,7 @@ import {
 
 // The sheet as of 2026-10-14: No soda, started 2026-10-08, $8/day.
 const habit = { name: 'No soda', start: '2026-10-08', rate: 8 };
-const log = ['01', '02', '03', '04', '05', '08', '09', '10', '11', '12', '13', '14']
+const log = ['08', '09', '10', '11', '12', '13', '14']
   .map((d) => ({ date: `2026-10-${d}`, habit: 'No soda' }));
 
 test('date helpers cross month boundaries', () => {
