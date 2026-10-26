@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   addDays, daysBetween, applyOps, doneDates, habitStats, missedDays, monthCells, toNumber, fmtMoney,
+  parseUnit, fmtSaved,
 } from '../docs/habits/js/core.js';
 
 // The sheet as of 2026-10-14: No soda, started 2026-10-08, $8/day.
@@ -76,4 +77,21 @@ test('money parsing and formatting', () => {
   assert.equal(toNumber('abc'), null);
   assert.equal(fmtMoney(56), '$56.00');
   assert.equal(fmtMoney(2920), '$2,920');
+});
+
+test('habits can save time instead of money', () => {
+  assert.equal(parseUnit('hours'), 'h');
+  assert.equal(parseUnit('$'), '$');
+  assert.equal(parseUnit(''), '$'); // older sheets have no "Saved as" column
+  const browsing = { name: 'No browsing', start: '2026-10-26', rate: 2, unit: 'hours' };
+  const days = ['26', '27', '28'].map((d) => ({ date: `2026-10-${d}`, habit: 'No browsing' }));
+  const s = habitStats(browsing, doneDates(days, 'No browsing'), '2026-10-28');
+  assert.equal(s.unit, 'h');
+  assert.equal(s.saved, 6);
+  assert.equal(fmtSaved(s.saved, s.unit), '6 h');
+  assert.equal(fmtSaved(0.5, 'h'), '30 min');
+  assert.equal(fmtSaved(730, 'h'), '730 h');
+  assert.equal(fmtSaved(8, '$'), '$8.00');
+  const out = applyOps({ habits: [browsing], log: [] }, [{ action: 'updateHabit', habit: 'No browsing', unit: '$' }]);
+  assert.equal(out.habits[0].unit, '$');
 });

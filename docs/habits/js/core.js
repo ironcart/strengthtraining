@@ -42,6 +42,7 @@ export function applyOps(data, ops) {
         ...h,
         ...(op.rate !== undefined ? { rate: op.rate } : {}),
         ...(op.start !== undefined ? { start: op.start } : {}),
+        ...(op.unit !== undefined ? { unit: op.unit } : {}),
       }));
     }
   }
@@ -83,7 +84,7 @@ export function habitStats(habit, dates, today) {
   });
 
   return {
-    start, rate, daysSinceStart, completed, last, daysSinceLast, current, longest,
+    start, rate, unit: parseUnit(habit.unit), daysSinceStart, completed, last, daysSinceLast, current, longest,
     doneToday: dates.has(today),
     completionRate: daysSinceStart ? completed / daysSinceStart : 0,
     saved: completed * rate,
@@ -115,6 +116,22 @@ export function monthCells(year, month) {
 }
 
 export const STREAK_MILESTONES = [3, 7, 14, 21, 30, 50, 60, 90, 100, 180, 200, 365];
+
+/** What a habit saves: '$' (money, the default) or 'h' (hours of time). */
+export function parseUnit(v) {
+  return /^h/i.test(String(v || '').trim()) ? 'h' : '$';
+}
+
+/** 2 -> "2 h", 1.5 -> "1.5 h", 0.5 -> "30 min". */
+export function fmtHours(v) {
+  const n = Number(v) || 0;
+  if (n > 0 && n < 1) return `${Math.round(n * 60)} min`;
+  return `${Number(n.toFixed(1)).toLocaleString('en-US')} h`;
+}
+
+export function fmtSaved(v, unit, opts) {
+  return unit === 'h' ? fmtHours(v) : fmtMoney(v, opts);
+}
 
 export function fmtMoney(v, { cents = true } = {}) {
   const n = Number(v) || 0;

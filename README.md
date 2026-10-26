@@ -100,6 +100,9 @@ A second app in this repo, at `https://<your-user>.github.io/strengthtraining/ha
   The current streak stays alive until you miss a whole day.
 - Works offline: taps are kept on the phone and synced in order when you're back online.
 - Add more habits as new rows on the `Habits` tab and a switcher appears at the top.
+- **Money or time.** A habit can save dollars or hours: set **Saved as** (column L of `Habits`) to `$` or `hours`,
+  or pick *Money* / *Time* under **Edit** in the app. Time habits show hours (2 h a day, 14 h a week, 730 h a year).
+  A habit that saves nothing (0 per day) shows its streak in place of the savings.
 
 **Setup.** It's the same as Lift Log, but done in the **Habit Tracker** spreadsheet using
 [`apps-script/Habits.gs`](apps-script/Habits.gs):
@@ -108,7 +111,7 @@ Extensions → Apps Script → paste `Habits.gs` → run **`setupToken`** → **
 your home screen as its own app. Until it's connected it runs in demo mode on a snapshot of your sheet.
 
 The app only writes the input columns: `Log` A–C (one row per habit per day, never duplicated; undo deletes
-the row) and `Habits` B–C. The formula columns are never touched.
+the row) and `Habits` B–C and L. The formula columns are never touched.
 
 ## Development
 

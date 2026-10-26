@@ -9,14 +9,17 @@
  * GET  ?action=data&token=...                      -> { habits, log }
  * POST {action:'logDay', token, habit, date}       -> adds a Log row (once per habit and day)
  * POST {action:'unlogDay', token, habit, date}     -> removes that habit's Log rows for the day
- * POST {action:'updateHabit', token, habit, rate?, start?} -> edits "Saved per day" / "Start date"
+ * POST {action:'updateHabit', token, habit, rate?, start?, unit?} -> edits "Saved per day" / "Start date" / "Saved as"
  *
- * Only the yellow input columns (Habits A-C, Log A-C) are written; the formulas are never touched.
+ * Only the yellow input columns (Habits A-C and L, Log A-C) are written; the formulas are never touched.
  */
 
 var HABITS_SHEET = 'Habits';
 var LOG_SHEET = 'Log';
 var HABITS_FIRST_ROW = 5; // rows 1-4 are the title, help text, total and headers
+var UNIT_COL = 12; // L: "Saved as" - "$" (money, the default) or "hours"
+var MONEY_FORMAT = '$#,##0.00;($#,##0.00);"-"';
+var HOURS_FORMAT = '#,##0.0" h"';
 
 /** Run once from the editor. Generates the secret the web app must send. */
 function setupToken() {
@@ -90,10 +93,15 @@ function habitRows_() {
   var sh = sheet_(HABITS_SHEET);
   var last = sh.getLastRow();
   if (last < HABITS_FIRST_ROW) return [];
-  return sh.getRange(HABITS_FIRST_ROW, 1, last - HABITS_FIRST_ROW + 1, 3).getValues().map(function (r, i) {
-    return { row: HABITS_FIRST_ROW + i, name: String(r[0]).trim(), start: fmtDate_(r[1]), rate: r[2] === '' ? 0 : Number(r[2]) };
+  return sh.getRange(HABITS_FIRST_ROW, 1, last - HABITS_FIRST_ROW + 1, UNIT_COL).getValues().map(function (r, i) {
+    return {
+      row: HABITS_FIRST_ROW + i, name: String(r[0]).trim(), start: fmtDate_(r[1]),
+      rate: r[2] === '' ? 0 : Number(r[2]), unit: isHours_(r[UNIT_COL - 1]) ? 'hours' : '$',
+    };
   }).filter(function (h) { return h.name; });
 }
+
+function isHours_(v) { return /^h/i.test(String(v || '').trim()); }
 
 function findHabit_(name) {
   var h = habitRows_().filter(function (x) { return x.name === name; })[0];
@@ -111,7 +119,7 @@ function logRows_() {
 }
 
 function getData_() {
-  var habits = habitRows_().map(function (h) { return { name: h.name, start: h.start, rate: h.rate }; });
+  var habits = habitRows_().map(function (h) { return { name: h.name, start: h.start, rate: h.rate, unit: h.unit }; });
   var log = logRows_().filter(function (r) { return r.date && r.habit; })
     .map(function (r) { return { date: r.date, habit: r.habit, note: r.note }; });
   return { habits: habits, log: log, updated: new Date().toISOString() };
@@ -147,8 +155,15 @@ function updateHabit_(p) {
   var sh = sheet_(HABITS_SHEET);
   if (p.rate !== undefined) {
     var rate = Number(p.rate);
-    if (!isFinite(rate) || rate < 0) throw new Error('Saved per day must be a number of dollars');
+    if (!isFinite(rate) || rate < 0) throw new Error('Saved per day must be a number (dollars or hours)');
     sh.getRange(h.row, 3).setValue(rate);
+  }
+  if (p.unit !== undefined) {
+    var hours = isHours_(p.unit);
+    sh.getRange(h.row, UNIT_COL).setValue(hours ? 'hours' : '$');
+    // "Saved per day" (C) and "Total saved" (K) read as hours or dollars to match.
+    sh.getRange(h.row, 3).setNumberFormat(hours ? HOURS_FORMAT : MONEY_FORMAT);
+    sh.getRange(h.row, 11).setNumberFormat(hours ? HOURS_FORMAT : MONEY_FORMAT);
   }
   if (p.start !== undefined) {
     sh.getRange(h.row, 2).setValue(checkDate_(p.start)).setNumberFormat('yyyy-mm-dd');

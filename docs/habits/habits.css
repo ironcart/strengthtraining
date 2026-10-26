@@ -235,6 +235,23 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
 .money-input { position: relative; display: block; }
 .money-input i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-style: normal; font-size: 17px; font-weight: 700; color: var(--muted); }
 .money-input input { padding-left: 28px; }
+.money-input .post { left: auto; right: 14px; display: none; }
+.money-input.hours .pre { display: none; }
+.money-input.hours .post { display: block; }
+.money-input.hours input { padding-left: 12px; padding-right: 32px; }
+.habit-form .for-time, .habit-form:has(.money-input.hours) .for-money { display: none; }
+.habit-form:has(.money-input.hours) .for-time { display: inline; }
+.unit-pick { border: 0; padding: 0; margin: 0 0 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.unit-pick legend { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; padding: 0; }
+.unit-pick label { position: relative; }
+.unit-pick input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.unit-pick span {
+  display: grid; place-items: center; height: 44px; border-radius: 12px; border: 1.5px solid var(--line);
+  background: var(--surface-2); font-weight: 600; font-size: 14px; color: var(--text-2);
+}
+.unit-pick input:checked + span { border-color: var(--good); background: var(--good-soft); color: var(--good-text); }
+.unit-pick input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.proj small { display: block; font-size: 11.5px; color: var(--muted); }
 .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
 .settings .row { justify-content: flex-start; }
 .btn {

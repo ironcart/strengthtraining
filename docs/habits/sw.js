@@ -1,5 +1,5 @@
 // Offline shell for Habit Log: cache the app files, always go to the network for sheet data.
-const CACHE = 'habitlog-v1';
+const CACHE = 'habitlog-v2';
 const SHELL = ['./', 'index.html', 'habits.css', 'js/app.js', 'js/core.js', 'js/demo-data.js', 'manifest.webmanifest', 'icon.svg'];
 
 self.addEventListener('install', (e) => {

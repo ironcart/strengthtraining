@@ -1,6 +1,6 @@
 import {
   toIso, addDays, daysBetween, applyOps, doneDates, habitStats, missedDays, monthCells,
-  toNumber, fmtMoney, isIsoDate, STREAK_MILESTONES,
+  toNumber, fmtSaved, parseUnit, isIsoDate, STREAK_MILESTONES,
 } from './core.js';
 import demoData from './demo-data.js';
 
@@ -208,15 +208,23 @@ function renderToday() {
     ? `<div class="habit-tabs" role="tablist">${data.habits.map((h) => `<button role="tab" data-habit="${esc(h.name)}" aria-selected="${h.name === habit.name}">${esc(h.name)}</button>`).join('')}</div>`
     : '';
 
+  const saves = s.rate > 0;
+  const amount = (v, opts) => fmtSaved(v, s.unit, opts);
+  const isTime = s.unit === 'h';
+  const startShort = fmt(s.start, { month: 'short', day: 'numeric' });
   const streakNote = s.current && !s.doneToday ? 'Log today to keep it going' : s.current ? 'Keep it up' : s.last ? 'Start a new one today' : 'Your first day starts it';
 
   $('#main').innerHTML = `
     ${switcher}
     <section class="hero">
       <p class="eyebrow">${esc(habit.name)}</p>
-      <p class="saved-label">Saved so far</p>
-      <p class="saved-amount" id="saved-amount">${fmtMoney(s.saved)}</p>
-      <p class="sub">${plural(s.completed, 'day')} × ${fmtMoney(s.rate)} since ${fmt(s.start, { month: 'short', day: 'numeric' })}</p>
+      ${saves ? `
+        <p class="saved-label">${isTime ? 'Time won back so far' : 'Saved so far'}</p>
+        <p class="saved-amount" id="saved-amount">${amount(s.saved)}</p>
+        <p class="sub">${plural(s.completed, 'day')} × ${amount(s.rate)} since ${startShort}</p>` : `
+        <p class="saved-label">Current streak</p>
+        <p class="saved-amount" id="saved-amount">${plural(s.current, 'day')}</p>
+        <p class="sub">${plural(s.completed, 'day')} done since ${startShort}</p>`}
     </section>
 
     <section class="log card" aria-label="Log a day">
@@ -232,10 +240,10 @@ function renderToday() {
         </span>
       </button>
       <p class="big-hint">${selDone
-        ? `Logged${beforeStart ? '' : ` · +${fmtMoney(s.rate)}`}. Tap again to undo.`
+        ? `Logged${beforeStart || !saves ? '' : ` · +${amount(s.rate)}`}. Tap again to undo.`
         : sel === state.today ? `Tap when you've stuck to it today.`
         : `Forgot to log ${relDay(sel).toLowerCase() === 'yesterday' ? 'yesterday' : shortDate(sel)}? Tap to add it.`}
-        ${beforeStart ? `<br><span class="muted">Before your start date (${fmt(s.start, { month: 'short', day: 'numeric' })}), so it counts toward streaks but not savings.</span>` : ''}</p>
+        ${beforeStart ? `<br><span class="muted">Before your start date (${fmt(s.start, { month: 'short', day: 'numeric' })}), so it counts toward streaks but not ${isTime ? 'time saved' : 'savings'}.</span>` : ''}</p>
       ${missed.length ? `
         <div class="missed">
           <p>Not logged: tap a day you stuck to it</p>
@@ -251,22 +259,28 @@ function renderToday() {
     </section>
 
     <section class="card money">
-      <div class="card-head"><h2>Money saved</h2>
+      <div class="card-head"><h2>${!saves ? 'Savings' : isTime ? 'Time saved' : 'Money saved'}</h2>
         ${state.editing ? '' : '<button class="link" id="edit-habit">Edit</button>'}</div>
       ${state.editing ? `
         <form id="habit-form" class="habit-form">
+          <fieldset class="unit-pick"><legend>It saves me</legend>
+            <label><input type="radio" name="unit" value="$" ${isTime ? '' : 'checked'}><span>Money ($)</span></label>
+            <label><input type="radio" name="unit" value="h" ${isTime ? 'checked' : ''}><span>Time (hours)</span></label>
+          </fieldset>
           <label><span>Saved per day</span>
-            <span class="money-input"><i>$</i><input name="rate" type="text" inputmode="decimal" value="${esc(s.rate)}" required aria-label="Dollars saved per day"></span>
-            <small>What this habit saves you each day, e.g. one $2 soda twice a day = 4.</small></label>
+            <span class="money-input ${isTime ? 'hours' : ''}"><i class="pre">$</i><input name="rate" type="text" inputmode="decimal" value="${esc(s.rate)}" required aria-label="Saved per day"><i class="post">h</i></span>
+            <small class="for-money">e.g. one $2 soda twice a day = 4. Use 0 if it doesn't save money.</small>
+            <small class="for-time">e.g. 8:45pm to 10:45pm = 2. Use 0.5 for half an hour.</small></label>
           <label><span>Counting from</span><input name="start" type="date" value="${esc(s.start)}" max="${state.today}" required></label>
           <div class="row"><button class="btn ghost" type="button" id="cancel-edit">Cancel</button><button class="btn primary" type="submit">Save</button></div>
         </form>` : `
-        <p class="rate"><b>${fmtMoney(s.rate)}</b> per day you stick to it</p>
+        ${saves ? `
+        <p class="rate"><b>${amount(s.rate)}</b> per day you stick to it${isTime ? ` · <b>${amount(s.saved)}</b> so far` : ''}</p>
         <div class="proj">
-          <div><span>A week</span><b>${fmtMoney(s.rate * 7)}</b></div>
-          <div><span>A month</span><b>${fmtMoney(s.perMonth, { cents: false })}</b></div>
-          <div><span>A year</span><b>${fmtMoney(s.perYear, { cents: false })}</b></div>
-        </div>`}
+          <div><span>A week</span><b>${amount(s.rate * 7)}</b></div>
+          <div><span>A month</span><b>${amount(s.perMonth, { cents: false })}</b></div>
+          <div><span>A year</span><b>${amount(s.perYear, { cents: false })}</b>${isTime ? `<small>≈ ${Math.round(s.perYear / 24)} full days</small>` : ''}</div>
+        </div>` : '<p class="rate">Not tracking money or time for this habit. Tap <b>Edit</b> to add what it saves you each day.</p>'}`}
     </section>
 
     <section class="card cal" aria-label="Calendar">
@@ -371,9 +385,9 @@ function toggleDay(date, { from = 'button' } = {}) {
   const habitRow = after.habits.find((h) => h.name === habit);
   const s = habitStats(habitRow, doneDates(after.log, habit), state.today);
   const milestone = s.current && STREAK_MILESTONES.includes(s.current) && date >= addDays(state.today, -s.current);
-  const msg = milestone ? `${s.current}-day streak! ${fmtMoney(s.saved)} saved so far`
-    : date < s.start ? `Logged ${shortDate(date)}`
-    : `Logged ${shortDate(date)} · +${fmtMoney(s.rate)}`;
+  const msg = milestone ? `${s.current}-day streak!${s.rate > 0 ? ` ${fmtSaved(s.saved, s.unit)} saved so far` : ''}`
+    : date < s.start || !(s.rate > 0) ? `Logged ${shortDate(date)}`
+    : `Logged ${shortDate(date)} · +${fmtSaved(s.rate, s.unit)}`;
   toast(msg, 'good', { label: 'Undo', run: () => { commit(undo); render(); } });
 }
 
@@ -406,19 +420,27 @@ document.addEventListener('click', (e) => {
   if (t.id === 'reset-demo') { store.del('demo'); load(); toast('Demo data reset'); }
 });
 
+// Switch the "$" / "h" marker as soon as the unit is picked.
+document.addEventListener('change', (e) => {
+  if (e.target.name !== 'unit') return;
+  e.target.form.querySelector('.money-input').classList.toggle('hours', e.target.value === 'h');
+});
+
 document.addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = Object.fromEntries(new FormData(e.target));
   if (e.target.id === 'habit-form') {
     const rate = toNumber(form.rate);
-    if (rate === null || rate < 0) { toast('Enter the dollars saved per day, e.g. 8 or 2.50', 'bad'); return; }
+    const unit = form.unit === 'h' ? 'h' : '$';
+    if (rate === null || rate < 0) { toast(unit === 'h' ? 'Enter the hours saved per day, e.g. 2 or 0.5' : 'Enter the dollars saved per day, e.g. 8 or 2.50', 'bad'); return; }
     if (!isIsoDate(form.start) || form.start > state.today) { toast('Pick a start date that is not in the future', 'bad'); return; }
     const habit = view().habits.find((h) => h.name === state.habit);
     const op = { action: 'updateHabit', habit: state.habit };
     if (rate !== Number(habit.rate)) op.rate = rate;
     if (form.start !== habit.start) op.start = form.start;
+    if (unit !== parseUnit(habit.unit)) op.unit = unit;
     state.editing = false;
-    if (op.rate !== undefined || op.start !== undefined) { commit(op); toast(`Now saving ${fmtMoney(rate)} a day`, 'good'); }
+    if (Object.keys(op).length > 2) { commit(op); toast(rate > 0 ? `Now saving ${fmtSaved(rate, unit)} a day` : 'Saved', 'good'); }
     render();
   } else if (e.target.id === 'settings-form') {
     store.set('settings', { ...settings(), apiUrl: form.apiUrl.trim(), token: form.token.trim() });
